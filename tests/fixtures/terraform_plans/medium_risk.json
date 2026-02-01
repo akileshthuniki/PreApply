@@ -1,0 +1,35 @@
+{
+  "format_version": "1.0",
+  "terraform_version": "1.0.0",
+  "resource_changes": [
+    {
+      "address": "module.vpc.aws_vpc.main",
+      "change": {
+        "actions": ["update"],
+        "before": {
+          "cidr_block": "10.0.0.0/16"
+        },
+        "after": {
+          "cidr_block": "10.0.0.0/16",
+          "enable_dns_hostnames": true
+        }
+      },
+      "depends_on": []
+    },
+    {
+      "address": "module.vpc.aws_subnet.public",
+      "change": {
+        "actions": ["update"],
+        "before": {
+          "vpc_id": "${module.vpc.aws_vpc.main.id}"
+        },
+        "after": {
+          "vpc_id": "${module.vpc.aws_vpc.main.id}",
+          "map_public_ip_on_launch": true
+        }
+      },
+      "depends_on": ["module.vpc.aws_vpc.main"]
+    }
+  ]
+}
+

@@ -1,0 +1,18 @@
+# PreApply Environment Configuration
+# 
+# Copy this file to .preapply-env.yaml in your project root
+# or set PREAPPLY_ENV environment variable (format: "name:mode")
+#
+# Enforcement modes:
+#   auto   - Policy violations block deployment (exit code 2)
+#   manual - Policy violations require approval (exit code 3)
+
+environment:
+  # Environment name (development, staging, preprod, production)
+  name: preprod
+  
+  # Enforcement mode: "auto" or "manual"
+  #   auto:   Block on policy violations (for dev/staging)
+  #   manual: Require approval on violations (for preprod/production)
+  enforcement_mode: manual
+

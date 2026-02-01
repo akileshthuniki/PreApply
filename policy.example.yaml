@@ -1,0 +1,44 @@
+# Example Policy File for PreApply
+# 
+# Usage: preapply policy check plan.json --policy-file policy.example.yaml
+#
+# Policies are evaluated against explanation IDs and risk levels.
+# No text parsing, no AI - purely deterministic matching.
+
+policies:
+  # Block high-risk changes
+  - id: block_high_risk
+    description: Block all high-risk changes
+    match:
+      risk_level: HIGH
+    action: fail
+
+  # Warn on shared infrastructure changes
+  - id: warn_shared_infrastructure
+    description: Warn when shared infrastructure is modified
+    match:
+      explanation_id: SHARED_INFRASTRUCTURE_CHANGE
+    action: warn
+
+  # Block critical shared dependencies
+  - id: block_critical_shared_deps
+    description: Block modifications to critical shared dependencies
+    match:
+      explanation_id: CRITICAL_SHARED_DEPENDENCY_MODIFICATION
+    action: fail
+
+  # Warn on delete operations
+  - id: warn_deletes
+    description: Warn on delete operations
+    match:
+      action_type: DELETE
+    action: warn
+
+  # Combined: Block high-risk shared infrastructure
+  - id: block_high_risk_shared
+    description: Block high-risk shared infrastructure changes
+    match:
+      explanation_id: SHARED_INFRASTRUCTURE_CHANGE
+      risk_level: HIGH
+    action: fail
+

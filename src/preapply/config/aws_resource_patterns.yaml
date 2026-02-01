@@ -1,0 +1,62 @@
+# AWS Resource Patterns for Infrastructure Layer Categorization
+# Used by human formatter to categorize resources into logical layers
+
+# Foundational layer: Core networking infrastructure
+# Resources that form the base of the infrastructure
+foundational:
+  - vpc
+  - subnet
+  - network
+  - virtual_network  # Azure
+  - compute_network  # GCP
+
+# Networking layer: Connectivity and routing
+# Resources that handle network connectivity and routing
+networking:
+  - nat
+  - gateway
+  - route
+  - peering
+  - vpn
+  - eip
+  - elastic_ip
+  - transit_gateway
+  - vpc_endpoint
+  - vpc_peering
+  - route_table
+  - internet_gateway
+  - nat_gateway
+  - vpn_gateway
+  - direct_connect
+
+# Security layer: Security and access control
+# Resources that enforce security policies
+security:
+  - security_group
+  - firewall
+  - acl
+  - waf
+  - network_acl
+  - network_security_group  # Azure
+  - compute_firewall  # GCP
+
+# Application layer: Application-facing resources
+# Resources that directly serve applications
+application:
+  - lb
+  - alb
+  - nlb
+  - elb
+  - target_group
+  - listener
+  - service
+  - function
+  - lambda
+  - ecs
+  - ec2
+  - instance
+  - container
+  - kubernetes
+  - eks
+  - fargate
+

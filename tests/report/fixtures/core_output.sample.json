@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0",
+  "risk_level": "HIGH",
+  "blast_radius_score": 82,
+  "affected_count": 11,
+  "affected_components": ["shared-vpc", "payments-api", "auth-service"],
+  "risk_attributes": {
+    "blast_radius": {
+      "affected_resources": 11,
+      "affected_components": 9,
+      "changed_resources": 4
+    },
+    "shared_dependencies": [
+      {
+        "resource_id": "aws_lb.shared",
+        "resource_type": "aws_lb",
+        "dependents": 3,
+        "is_critical": true,
+        "multiplier_applied": 2.0,
+        "risk_reason": "Shared ALB used by multiple services"
+      }
+    ],
+    "critical_infrastructure": [
+      {
+        "resource_id": "aws_nat_gateway.main",
+        "resource_type": "aws_nat_gateway",
+        "risk_reason": "Single NAT gateway for entire VPC"
+      }
+    ],
+    "action_types": ["UPDATE", "DELETE"],
+    "action_multiplier": 1.5
+  },
+  "risk_factors": [
+    "Shared ALB modification",
+    "Cross-module dependency",
+    "Delete action detected"
+  ],
+  "recommendations": [
+    "Isolate ALB per service",
+    "Review change impact before applying",
+    "Consider adding redundancy for NAT gateway"
+  ]
+}
