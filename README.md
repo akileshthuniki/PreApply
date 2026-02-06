@@ -1,8 +1,8 @@
 # PreApply
 
-[![PyPI version](https://img.shields.io/pypi/v/preapply.svg)](https://pypi.org/project/preapply/)
-[![Python versions](https://img.shields.io/pypi/pyversions/preapply.svg)](https://pypi.org/project/preapply/)
-[![License](https://img.shields.io/pypi/l/preapply.svg)](https://pypi.org/project/preapply/)
+[![PyPI](https://img.shields.io/badge/pypi-0.1.0-blue.svg)](https://pypi.org/project/preapply/)
+[![Python](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-green.svg)](LICENSE)
 
 **Deterministic infrastructure risk analysis engine for Terraform plans.**
 
