@@ -16,7 +16,7 @@ PreApply analyzes Terraform plan JSON files to identify risk factors, calculate 
 - 🎯 **Deterministic Analysis** - No AI interpretation in core engine, results are reproducible
 - 🤖 **AI Advisor** (Optional) - Read-only AI helper powered by Ollama for understanding plans
 - 📝 **Multiple Output Formats** - Human-readable and JSON output
-- 🚀 **CI/CD Ready** - Integrate into your pipeline for automated risk checks
+- 🚀 **CI/CD Ready** - Integrate into your pipeline for automated risk checks 
 
 ## Installation
 
