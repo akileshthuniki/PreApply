@@ -1,117 +1,175 @@
 # PreApply
 
-[![PyPI version](https://img.shields.io/pypi/v/preapply.svg)](https://pypi.org/project/preapply/)
-[![Python versions](https://img.shields.io/pypi/pyversions/preapply.svg)](https://pypi.org/project/preapply/)
-[![License](https://img.shields.io/pypi/l/preapply.svg)](https://pypi.org/project/preapply/)
+> Deterministic Terraform plan risk analyzer — know your blast radius *before* you apply.
 
-**Deterministic infrastructure risk analysis engine for Terraform plans.**
+[![PyPI version](https://img.shields.io/pypi/v/preapply)](https://pypi.org/project/preapply/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/preapply)](https://pypi.org/project/preapply/)
+[![Python](https://img.shields.io/pypi/pyversions/preapply)](https://pypi.org/project/preapply/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 
-PreApply analyzes Terraform plan JSON files to identify risk factors, calculate blast radius, and provide deterministic recommendations. It helps you understand the impact of infrastructure changes before applying them.
+---
+
+## ⭐ If PreApply saves you from a bad deployment, consider giving it a star!
+
+---
+
+## The Problem
+
+You've been there.
+
+It's deployment day. You run `terraform plan`. The output is 800 lines long.
+You scan it. It looks fine. You apply.
+
+Then your load balancer goes down. Three dependent services follow.
+Your phone explodes with alerts.
+
+**The problem wasn't carelessness. The problem was that infrastructure
+relationships are complex, subtle, and easy to misread under pressure.**
+
+PreApply solves this by analyzing your Terraform plan *before* you apply it —
+giving you a clear, deterministic risk assessment you can trust.
+
+---
+
+## What PreApply Does
+
+```
+$ preapply analyze plan.json
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  PreApply Risk Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Risk Level:        HIGH ⚠️
+  Blast Radius:      72/100
+  Affected Resources: 12
+  Affected Components: web-tier, database-tier, auth-service
+
+  Recommendations:
+  → Review shared resource modifications before applying
+  → Database changes will affect 8 downstream services
+  → Consider applying in stages to reduce blast radius
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
 
 ## Features
 
-- 🔍 **Blast Radius Analysis** - Calculate the impact scope of infrastructure changes
-- 📊 **Risk Scoring** - Automated risk level assessment (LOW, MEDIUM, HIGH)
-- 🔗 **Dependency Graph** - Visualize resource dependencies and relationships
-- 🎯 **Deterministic Analysis** - No AI interpretation in core engine, results are reproducible
-- 🤖 **AI Advisor** (Optional) - Read-only AI helper powered by Ollama for understanding plans
-- 📝 **Multiple Output Formats** - Human-readable and JSON output
-- 🚀 **CI/CD Ready** - Integrate into your pipeline for automated risk checks
+| Feature | Description |
+|---------|-------------|
+| 🔥 **Blast Radius Analysis** | Exactly which resources get affected |
+| 📊 **Risk Scoring** | LOW / MEDIUM / HIGH with 0-100 score |
+| 🔗 **Dependency Mapping** | Upstream/downstream impact visualization |
+| 🎯 **Deterministic Results** | Same input = same output, every time |
+| 🤖 **Local AI Advisor** | Optional plain-language explanations (private, no API calls) |
+| 📝 **Multiple Output Formats** | Human-readable and JSON |
+| 🚀 **CI/CD Ready** | GitHub Actions, GitLab CI, Jenkins |
+
+---
+
+## Why Deterministic?
+
+Most infrastructure tools try to use AI for risk detection. We don't.
+
+**AI-based risk detection is unreliable for infrastructure decisions because:**
+- Non-deterministic (same plan can get different scores)
+- Hard to audit or explain to stakeholders
+- Can "hallucinate" risks or miss real ones
+- Requires external API calls (privacy concern)
+
+**PreApply's approach:**
+- Core analysis is 100% deterministic
+- AI is optional and advisory only (never changes risk score)
+- Every decision is traceable and explainable
+- Works fully offline
+
+---
 
 ## Installation
 
-### Basic Installation
-
 ```bash
+# Basic installation
 pip install preapply
-```
 
-### With AI Support (Optional)
-
-For AI-powered advisory features, install with the `ai` extra:
-
-```bash
+# With optional AI advisor support
 pip install 'preapply[ai]'
 ```
 
-**Note:** AI support requires [Ollama](https://ollama.ai) to be installed and running locally.
+> AI support requires [Ollama](https://ollama.ai) installed and running locally.
+
+---
 
 ## Quick Start
 
-### 1. Generate Terraform Plan
-
 ```bash
-terraform plan -json > plan.json
-```
+# Step 1: Generate Terraform plan
+terraform plan -out=tfplan
+terraform show -json tfplan > plan.json
 
-### 2. Analyze the Plan
-
-```bash
-# Human-readable output
+# Step 2: Analyze risk
 preapply analyze plan.json
 
-# Save as JSON for further processing
+# Step 3: Save analysis for detailed review
 preapply analyze plan.json --json --output analysis.json
-```
 
-### 3. Get Detailed Explanation
-
-```bash
-# Explain overall risk assessment
+# Step 4: Get detailed explanation
 preapply explain analysis.json
 
-# Explain specific resource
-preapply explain analysis.json aws_lb.shared
-```
-
-### 4. Ask AI Questions (Optional)
-
-```bash
-# Requires AI support: pip install 'preapply[ai]'
+# Step 5: Ask AI questions (optional)
 preapply ask ai "What is the worst case impact?" analysis.json
-preapply ask ai "How can I reduce risk?" analysis.json
 ```
 
-## Usage Examples
+---
 
-### Basic Analysis
+## CI/CD Integration
 
-```bash
-# Analyze Terraform plan
-preapply analyze plan.json
+### GitHub Actions
 
-# Output:
-# Risk Level: MEDIUM
-# Blast Radius Score: 45/100
-# Affected Resources: 5
-# Affected Components: web-tier, database-tier
+```yaml
+name: Terraform Risk Analysis
+
+on:
+  pull_request:
+    paths:
+      - '**.tf'
+
+jobs:
+  preapply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Install PreApply
+        run: pip install preapply
+
+      - name: Generate Plan
+        run: |
+          terraform init
+          terraform plan -out=tfplan
+          terraform show -json tfplan > plan.json
+
+      - name: Analyze Risk
+        run: |
+          preapply analyze plan.json
+          preapply analyze plan.json --json --output analysis.json
+
+      - name: Upload Analysis
+        uses: actions/upload-artifact@v3
+        with:
+          name: risk-analysis
+          path: analysis.json
 ```
 
-### Save and Reuse Analysis
-
-```bash
-# Save analysis as JSON
-preapply analyze plan.json --json --output analysis.json
-
-# Use saved analysis for explanations
-preapply explain analysis.json
-preapply summary analysis.json
-```
-
-### AI-Powered Questions
-
-```bash
-# Ask about risk assessment
-preapply ask ai "What resources are most at risk?" analysis.json
-
-# Get recommendations
-preapply ask ai "How can I reduce the blast radius?" analysis.json
-```
+---
 
 ## Command Reference
 
 ### `preapply analyze`
-
 Main analysis command. Analyzes a Terraform plan JSON file.
 
 ```bash
@@ -123,13 +181,7 @@ Options:
   --quiet         Suppress progress messages
 ```
 
-**Example:**
-```bash
-preapply analyze plan.json --json --output analysis.json
-```
-
 ### `preapply explain`
-
 Generate deterministic explanations of risk assessment.
 
 ```bash
@@ -138,130 +190,122 @@ preapply explain <input_file> [resource_id] [OPTIONS]
 Options:
   --json              Output structured JSON
   --list-resources    List all available resource IDs
-  --quiet             Suppress progress messages
-```
-
-**Examples:**
-```bash
-preapply explain analysis.json
-preapply explain analysis.json aws_vpc.main
-preapply explain plan.json  # Auto-detects Terraform plan
 ```
 
 ### `preapply summary`
-
-Generate a short paragraph summary of risk assessment.
+Generate a short paragraph summary of the risk assessment.
 
 ```bash
 preapply summary <plan.json> [OPTIONS]
-
-Options:
-  --json          Output structured JSON
-  --quiet         Suppress progress messages
 ```
 
 ### `preapply ask`
-
-Ask AI advisor questions about the analysis (requires AI support).
+Ask AI advisor questions (requires `pip install 'preapply[ai]'`).
 
 ```bash
 preapply ask ai "<question>" <analysis.json> [OPTIONS]
 
 Options:
-  --model          Ollama model name (default: llama3.2)
-  --max-tokens      Maximum tokens for response
-  --json           Output JSON format
+  --model       Ollama model name (default: llama3.2)
+  --max-tokens  Maximum tokens for response
 ```
 
-**Example:**
-```bash
-preapply ask ai "What is the worst case impact?" analysis.json
-```
-
-### `preapply version`
-
-Show PreApply version.
-
-```bash
-preapply version
-```
+---
 
 ## Output Format
 
-PreApply returns a structured JSON object (`CoreOutput`) with:
+PreApply returns a structured `CoreOutput` JSON object:
 
-- `risk_level`: `LOW`, `MEDIUM`, or `HIGH`
-- `blast_radius_score`: Integer score from 0-100
-- `affected_count`: Number of resources affected
-- `affected_components`: List of affected component identifiers
-- `risk_attributes`: Structured risk attributes including:
-  - Shared dependencies
-  - Critical infrastructure
-  - Blast radius metrics
-- `recommendations`: Deterministic recommendations
-
-**Example JSON Output:**
 ```json
 {
   "version": "1.0.0",
-  "risk_level": "MEDIUM",
-  "blast_radius_score": 45,
-  "affected_count": 5,
-  "affected_components": ["web-tier", "database-tier"],
+  "risk_level": "HIGH",
+  "blast_radius_score": 72,
+  "affected_count": 12,
+  "affected_components": ["web-tier", "database-tier", "auth-service"],
   "risk_attributes": {
     "shared_dependencies": [...],
     "critical_infrastructure": [...],
     "blast_radius": {
-      "affected_resources": 5,
-      "affected_components": 2,
-      "changed_resources": 3
+      "affected_resources": 12,
+      "affected_components": 3,
+      "changed_resources": 5
     }
   },
   "recommendations": [
-    "Review shared resource modifications",
-    "Consider impact on dependent services"
+    "Review shared resource modifications before applying",
+    "Database changes will affect 8 downstream services"
   ]
 }
 ```
 
-## AI Advisor
-
-The AI advisor is a **read-only helper** powered by Ollama (local AI). It:
-
-✅ **Can:**
-- Help you understand what's inside the plan file
-- Answer questions about the analysis
-- Provide context about risk factors
-
-❌ **Cannot:**
-- Edit or modify anything
-- Change risk scores or levels
-- Affect policy decisions
-- Modify the plan or analysis
-
-**Requirements:**
-- Install AI support: `pip install 'preapply[ai]'`
-- Install and run [Ollama](https://ollama.ai) locally
-- Pull a model: `ollama pull llama3.2`
+---
 
 ## Architecture
 
-PreApply processes Terraform plans through five distinct layers:
+PreApply processes Terraform plans through five layers:
 
-1. **Ingest** - Loads and normalizes Terraform plan JSON
-2. **Graph** - Builds dependency relationships between resources
-3. **Analysis** - Calculates blast radius and risk scores
-4. **Contracts** - Defines versioned output schema (CoreOutput)
-5. **Presentation** - Formats results for human-readable output
+```
+Terraform Plan JSON
+        │
+        ▼
+┌─────────────────┐
+│   Ingest Layer  │  Loads and normalizes plan JSON
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Graph Layer   │  Builds dependency relationships
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Analysis Layer  │  Calculates blast radius + risk scores
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│Contract Layer   │  Versioned CoreOutput schema
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│Presentation     │  Human-readable or JSON output
+└─────────────────┘
+```
+
+---
+
+## AI Advisor
+
+The AI advisor is a **read-only** helper powered by Ollama (local AI).
+
+**✅ Can:**
+- Help you understand the plan file
+- Answer questions about the analysis
+- Provide plain-language context about risk factors
+
+**❌ Cannot:**
+- Modify anything
+- Change risk scores or levels
+- Affect policy decisions
+
+**Why local AI?**
+Your Terraform plans contain sensitive infrastructure details.
+PreApply's AI never sends data to external APIs.
+Everything stays on your machine.
+
+---
 
 ## Requirements
 
-- Python 3.8 or higher
+- Python 3.8+
 - Terraform (for generating plan JSON files)
+- Ollama (optional, for AI features)
+
+---
 
 ## Development
-
-### Setup Development Environment
 
 ```bash
 # Clone repository
@@ -284,18 +328,36 @@ ruff check src/ tests/
 mypy src/
 ```
 
-## License
-
-Licensed under the Apache License, Version 2.0.
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/akileshthuniki/PreApply/issues)
+---
 
 ## Contributing
 
-Contributions are welcome! Please see our contributing guidelines for more information.
+Contributions are welcome! Areas where help is most needed:
+
+- Additional Terraform resource type handlers
+- More CI/CD platform integrations
+- Documentation improvements
+- Test coverage
+
+Please open an issue before submitting a large PR.
 
 ---
 
-**PreApply** - Understand your infrastructure changes before you apply them.
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).
+
+---
+
+## Author
+
+Built by [Akilesh Thuniki](https://github.com/akileshthuniki) —
+DevOps Engineer specializing in infrastructure safety and automation.
+
+- 🌐 Portfolio: [akileshthuniki-portfolio.netlify.app](https://akileshthuniki-portfolio.netlify.app)
+- 💼 LinkedIn: [linkedin.com/in/akileshthuniki](https://linkedin.com/in/akileshthuniki)
+- 📦 PyPI: [pypi.org/project/preapply](https://pypi.org/project/preapply)
+
+---
+
+*PreApply — Because "it looked fine in the plan" isn't good enough.*
