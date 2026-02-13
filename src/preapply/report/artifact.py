@@ -11,7 +11,7 @@ from ..utils.logging import get_logger
 logger = get_logger("report.artifact")
 
 # Package version (from pyproject.toml)
-PACKAGE_VERSION = "0.1.0"
+PACKAGE_VERSION = "0.1.1"
 
 
 def generate_artifacts(core_output: CoreOutput, output_dir: Path) -> None:
