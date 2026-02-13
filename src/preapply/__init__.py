@@ -12,7 +12,7 @@ from .config import load_scoring_config
 from .utils.logging import setup_logging, get_logger
 from .utils.errors import PreApplyError
 
-__version__ = "1.0.1"
+__version__ = "1.0.3"
 
 __all__ = ["analyze"]
 
