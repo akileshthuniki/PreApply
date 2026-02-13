@@ -8,6 +8,7 @@ version = "1.0.0"
 description = "Deterministic infrastructure risk analysis engine for Terraform plans"
 readme = "README.md"
 license = {text = "Apache-2.0"}
+authors = [ { name = "Akilesh Thuniki", email = "thunikiakilesh@gmail.com" } ]
 requires-python = ">=3.8"
 keywords = ["terraform", "infrastructure", "risk-analysis", "devops", "blast-radius", "sre"]
 classifiers = [
