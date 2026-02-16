@@ -2,14 +2,46 @@
 
 import json
 import click
+from pathlib import Path
 from typing import Optional
 from ...contracts.core_output import CoreOutput
 from ...utils.errors import PreApplyError
 from ...utils.logging import get_logger
-from ..utils import format_error
+from ..utils import format_error, run_analysis
 from ..utils.file_resolver import resolve_file_path
 
 logger = get_logger("cli.ask")
+
+
+def _is_terraform_plan(data: dict) -> bool:
+    """True if JSON looks like a Terraform plan."""
+    return "resource_changes" in data or "terraform_version" in data
+
+
+def _is_core_output(data: dict) -> bool:
+    """True if JSON looks like PreApply CoreOutput."""
+    return "risk_level" in data and "blast_radius_score" in data and "risk_attributes" in data
+
+
+def _load_output_from_file(file_path: str) -> CoreOutput:
+    """
+    Load CoreOutput from file. Accepts either Terraform plan (runs analysis)
+    or PreApply analysis JSON (CoreOutput).
+    """
+    path = resolve_file_path(file_path)
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    if _is_core_output(data):
+        return CoreOutput(**data)
+    if _is_terraform_plan(data):
+        click.echo("Detected Terraform plan - running analysis first...", err=True)
+        return run_analysis(str(path))
+    raise ValueError(
+        "File is neither a Terraform plan nor a PreApply analysis. "
+        "Use a plan from 'terraform plan -out=tfplan' (then terraform show -json tfplan > plan.json) "
+        "or run 'preapply analyze plan.json --json -o analysis.json' first."
+    )
 
 
 def _check_ai_installed() -> bool:
@@ -96,27 +128,26 @@ def ask(provider_keyword, question, file_path, model, max_tokens, output_json):
             ), err=True)
             click.get_current_context().exit(1)
         
-        # Resolve and validate file path
+        # Load CoreOutput (from analysis JSON or Terraform plan)
         try:
-            analysis_path = resolve_file_path(file_path)
+            output_obj = _load_output_from_file(file_path)
         except FileNotFoundError as e:
-            error_msg = str(e).replace("File not found", "Analysis file not found")
-            error_msg += " Make sure you've run 'preapply analyze' first or provide the correct file path."
+            error_msg = (
+                f"{e}\n\nYou can use either:\n"
+                "  • A Terraform plan: preapply ask ai \"Your question\" plan.json\n"
+                "  • Or save analysis first: preapply analyze plan.json --json -o analysis.json"
+            )
             click.echo(format_error(error_msg), err=True)
             click.get_current_context().exit(1)
-        
-        # Load CoreOutput
-        try:
-            with open(analysis_path, 'r', encoding='utf-8') as f:
-                output_data = json.load(f)
-            output_obj = CoreOutput(**output_data)
         except json.JSONDecodeError as e:
-            error_msg = f"The file {file_path} is not valid JSON. Please ensure it's a valid PreApply analysis file."
+            error_msg = f"The file {file_path} is not valid JSON."
             click.echo(format_error(error_msg), err=True)
             click.get_current_context().exit(1)
-        except Exception as e:
-            error_msg = f"Failed to load analysis file: {e}"
-            click.echo(format_error(error_msg), err=True)
+        except ValueError as e:
+            click.echo(format_error(str(e)), err=True)
+            click.get_current_context().exit(1)
+        except PreApplyError as e:
+            click.echo(format_error(str(e)), err=True)
             click.get_current_context().exit(1)
         
         # Get AI advisor
@@ -167,6 +198,8 @@ def ask(provider_keyword, question, file_path, model, max_tokens, output_json):
     except PreApplyError as e:
         click.echo(format_error(str(e)), err=True)
         click.get_current_context().exit(1)
+    except click.exceptions.Exit:
+        raise
     except Exception as e:
         logger.error(f"Unexpected error: {e}", exc_info=True)
         click.echo(format_error(f"Failed to get AI response: {e}"), err=True)

@@ -24,12 +24,12 @@ def policy():
 @click.argument('plan_json', type=click.Path(exists=False), required=False)
 @click.option('--policy-file', '-p', type=click.Path(exists=True), required=True, help='Path to policy YAML file')
 @click.option('--resource-id', help='Check policy for specific resource')
-@click.option('--json', is_flag=True, help='Output structured JSON')
+@click.option('--json', 'json_output', is_flag=True, help='Output structured JSON')
 @click.option('--quiet', is_flag=True, help='Suppress progress messages')
 @click.option('--from-json', type=click.Path(exists=True), help='Reuse analysis from JSON file instead of running analysis')
 @click.option('--environment', type=click.Path(exists=True), help='Path to environment config file (.preapply-env.yaml)')
 @click.option('--enforcement-mode', type=click.Choice(['auto', 'manual']), help='Override enforcement mode (auto=block, manual=require approval)')
-def check(plan_json, policy_file, resource_id, json, quiet, from_json, environment, enforcement_mode):
+def check(plan_json, policy_file, resource_id, json_output, quiet, from_json, environment, enforcement_mode):
     """Check policies against Terraform plan analysis."""
     try:
         # Load environment configuration
@@ -68,7 +68,7 @@ def check(plan_json, policy_file, resource_id, json, quiet, from_json, environme
         result = check_policies(output, explanation_id, policy_file, resource_id)
         
         # Output results
-        if json:
+        if json_output:
             output_data = {
                 "passed": result.passed,
                 "failure_count": result.failure_count,

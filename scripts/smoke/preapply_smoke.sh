@@ -10,23 +10,23 @@ echo ""
 
 # Test 1: Basic analysis
 echo "✓ Test 1: Basic analysis"
-preapply analyze tests/fixtures/terraform_plans/low_risk.json > /dev/null 2>&1
+preapply analyze samples/low_risk.json > /dev/null 2>&1
 echo "  PASS: analyze command works"
 
 # Test 2: Explain (overall)
 echo "✓ Test 2: Explain (overall)"
-preapply explain tests/fixtures/terraform_plans/low_risk.json > /dev/null 2>&1
+preapply explain samples/low_risk.json > /dev/null 2>&1
 echo "  PASS: explain command works"
 
 # Test 3: Explain (JSON output)
 echo "✓ Test 3: Explain (JSON output)"
-preapply explain tests/fixtures/terraform_plans/low_risk.json --json > /dev/null 2>&1
+preapply explain samples/low_risk.json --json > /dev/null 2>&1
 echo "  PASS: explain --json works"
 
 # Test 3b: JSON contract sanity check
 echo "✓ Test 3b: JSON contract sanity"
 if command -v jq > /dev/null 2>&1; then
-    preapply explain tests/fixtures/terraform_plans/low_risk.json --json \
+    preapply explain samples/low_risk.json --json \
         | jq -e '.explanation_id and .risk_level' > /dev/null 2>&1
     echo "  PASS: JSON contains core contract fields"
 else
@@ -35,18 +35,18 @@ fi
 
 # Test 4: List resources
 echo "✓ Test 4: List resources"
-preapply explain tests/fixtures/terraform_plans/low_risk.json --list-resources > /dev/null 2>&1
+preapply explain samples/low_risk.json --list-resources > /dev/null 2>&1
 echo "  PASS: explain --list-resources works"
 
 # Test 5: Summary
 echo "✓ Test 5: Summary"
-preapply summary tests/fixtures/terraform_plans/low_risk.json > /dev/null 2>&1
+preapply summary samples/low_risk.json > /dev/null 2>&1
 echo "  PASS: summary command works"
 
 # Test 6: Policy check (if policy file exists)
 if [ -f "policy.example.yaml" ]; then
     echo "✓ Test 6: Policy check (auto mode)"
-    preapply policy check tests/fixtures/terraform_plans/low_risk.json \
+    preapply policy check samples/low_risk.json \
         --policy-file policy.example.yaml \
         --enforcement-mode auto > /dev/null 2>&1 || {
         exit_code=$?
@@ -67,7 +67,7 @@ if [ -f "policy.example.yaml" ]; then
     
     # Test 6b: Policy check with manual mode
     echo "✓ Test 6b: Policy check (manual mode)"
-    preapply policy check tests/fixtures/terraform_plans/low_risk.json \
+    preapply policy check samples/low_risk.json \
         --policy-file policy.example.yaml \
         --enforcement-mode manual > /dev/null 2>&1 || {
         exit_code=$?

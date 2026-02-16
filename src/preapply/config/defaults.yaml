@@ -39,8 +39,93 @@ shared_resources:
     - aws_internet_gateway
     - aws_route_table
     - aws_security_group
+    - aws_db_instance
+    - aws_s3_bucket
     - azurerm_lb
     - azurerm_virtual_network
     - google_compute_network
     - google_compute_forwarding_rule
+
+  # Resource types that trigger critical stop on DELETE (business foundation)
+  sensitive_delete_types:
+    - aws_db_instance
+    - aws_s3_bucket
+
+# High-cost resource detection (cost spike alerts)
+cost_alerts:
+  high_cost_types:
+    - aws_nat_gateway
+  high_cost_instance_types:
+    - t3.2xlarge
+    - m5.4xlarge
+    - p4d.24xlarge
+  # Tier mapping for scaling detection (region-agnostic)
+  instance_cost_tiers:
+    low:
+      - t3.micro
+      - t3.small
+    high:
+      - t3.2xlarge
+      - m5.4xlarge
+      - p4d.24xlarge
+
+# Production risk scoring (multi-dimensional formula)
+# When absent, scorer auto-migrates from blast_radius, shared_resources, cost_alerts
+risk_scoring:
+  data_loss:
+    base_weight: 50.0
+    decay_factor: 0.85
+    state_destructive_multiplier: 0.6
+  security:
+    base_weight: 40.0
+    decay_factor: 0.90
+    sensitive_port_penalty: 20.0
+    sensitive_ports: [22, 3389, 1433, 3306, 5432, 5439, 27017]
+  infrastructure:
+    shared_resource_base: 30.0
+    critical_multiplier: 1.3
+    critical_types:
+      - aws_lb
+      - aws_alb
+      - aws_nlb
+      - aws_vpc
+      - aws_subnet
+      - aws_eks_cluster
+      - aws_ecs_cluster
+      - aws_rds_cluster
+      - aws_elasticache_replication_group
+  cost:
+    creation_weight: 15.0
+    scaling_weight: 10.0
+    decay_factor: 0.90
+  interactions:
+    data_security:
+      thresholds: [40, 40]
+      bonus: 0.35
+    infrastructure_security:
+      thresholds: [60, 40]
+      bonus: 0.30
+    data_infrastructure:
+      thresholds: [40, 60]
+      bonus: 0.25
+    cost_infrastructure:
+      thresholds: [30, 60]
+      bonus: 0.20
+    multi_dimension:
+      threshold: 35.0
+      three_plus_bonus: 0.40
+      two_bonus: 0.15
+  blast_radius:
+    base_multiplier: 10.0
+    weights:
+      infrastructure: 1.0
+      security: 0.4
+      data: 0.2
+      cost: 0.5
+  thresholds:
+    critical_catastrophic: 200.0
+    critical: 150.0
+    high_severe: 100.0
+    high: 70.0
+    medium: 40.0
 

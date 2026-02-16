@@ -6,6 +6,13 @@
 # No text parsing, no AI - purely deterministic matching.
 
 policies:
+  # Hard block on catastrophic/critical (6-tier CRITICAL-CATASTROPHIC or CRITICAL)
+  - id: block_critical
+    description: Block catastrophic or critical changes (VP-level approval required)
+    match:
+      risk_level: CRITICAL
+    action: fail
+
   # Block high-risk changes
   - id: block_high_risk
     description: Block all high-risk changes
@@ -40,5 +47,19 @@ policies:
     match:
       explanation_id: SHARED_INFRASTRUCTURE_CHANGE
       risk_level: HIGH
+    action: fail
+
+  # Business Foundation: Critical stop for sensitive deletions
+  - id: block_sensitive_deletes
+    description: Block deletion of aws_db_instance or aws_s3_bucket
+    match:
+      has_sensitive_deletions: true
+    action: fail
+
+  # Business Foundation: Block public exposure
+  - id: block_public_exposure
+    description: Block plans that open Security Groups to 0.0.0.0/0 or S3 to public
+    match:
+      has_security_exposures: true
     action: fail
 

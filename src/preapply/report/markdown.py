@@ -35,8 +35,9 @@ def generate_markdown(core_output: CoreOutput, output_path: Path) -> None:
     # Summary
     sections.append("## Summary")
     sections.append("")
-    sections.append(f"- **Risk Level:** {core_output.risk_level}")
-    sections.append(f"- **Blast Radius Score:** {core_output.blast_radius_score}/100")
+    risk_level = getattr(core_output, "risk_level_detailed", None) or core_output.risk_level
+    sections.append(f"- **Risk Level:** {risk_level}")
+    sections.append(f"- **Blast Radius Score:** {core_output.blast_radius_score}")
     sections.append(f"- **Affected Resources:** {core_output.affected_count}")
     sections.append(f"- **Affected Components:** {len(core_output.affected_components)}")
     sections.append("")

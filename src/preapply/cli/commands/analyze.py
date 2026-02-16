@@ -18,7 +18,8 @@ logger = get_logger("cli.analyze")
 @click.option('--json', is_flag=True, help='Output structured JSON instead of human-readable')
 @click.option('--output', '-o', type=click.Path(), help='Save output to file')
 @click.option('--quiet', is_flag=True, help='Suppress progress messages')
-def analyze(plan_json, json, output, quiet):
+@click.option('--ascii', 'ascii_output', is_flag=True, help='Use ASCII-only output (for PowerShell/legacy terminals that show ? for Unicode)')
+def analyze(plan_json, json, output, quiet, ascii_output):
     """
     Analyze Terraform plan and show risk assessment.
     
@@ -48,7 +49,9 @@ def analyze(plan_json, json, output, quiet):
             output_text = _format_json_output(analysis_result)
         else:
             from ...presentation.human_formatter import format_human_friendly
-            output_text = format_human_friendly(analysis_result)
+            import os
+            ascii_mode = ascii_output or os.environ.get("PREAPPLY_ASCII", "").lower() in ("1", "true", "yes")
+            output_text = format_human_friendly(analysis_result, ascii_mode=ascii_mode)
         
         # Write output
         if output:

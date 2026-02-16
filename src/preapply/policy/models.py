@@ -21,6 +21,8 @@ class MatchRule(BaseModel):
     risk_level: Optional[RiskLevel] = Field(None, description="Match risk level")
     resource_type: Optional[str] = Field(None, description="Match resource type (e.g., 'aws_vpc')")
     action_type: Optional[str] = Field(None, description="Match action type (CREATE, UPDATE, DELETE)")
+    has_sensitive_deletions: Optional[bool] = Field(None, description="Match when sensitive_deletions is non-empty")
+    has_security_exposures: Optional[bool] = Field(None, description="Match when security_exposures is non-empty")
     
     class Config:
         use_enum_values = True

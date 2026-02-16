@@ -36,6 +36,11 @@ def generate_risk_reason(
         if is_shared:
             return "Shared security boundary"
         return "Access control enforcement"
+
+    if "db_instance" in resource_type_lower or "database" in resource_type_lower:
+        return "Data persistence - deletion causes data loss"
+    if "s3_bucket" in resource_type_lower:
+        return "Object storage - deletion causes data loss"
     
     if is_shared and dependents >= 3:
         return f"Shared resource with {dependents} dependents"
@@ -64,6 +69,11 @@ def generate_critical_risk_reason(resource_type: str) -> str:
     
     if "security_group" in resource_type_lower or "firewall" in resource_type_lower:
         return "Access control enforcement"
-    
+
+    if "db_instance" in resource_type_lower or "database" in resource_type_lower:
+        return "Data persistence - deletion causes data loss"
+    if "s3_bucket" in resource_type_lower:
+        return "Object storage - deletion causes data loss"
+
     return "Critical infrastructure component"
 

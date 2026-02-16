@@ -116,7 +116,19 @@ def _match_policy(
             return False
         if match_rule.action_type not in output.risk_attributes.action_types:
             return False
-    
+
+    # Check has_sensitive_deletions match
+    if match_rule.has_sensitive_deletions is True:
+        sensitive = getattr(output.risk_attributes, "sensitive_deletions", []) or []
+        if not sensitive:
+            return False
+
+    # Check has_security_exposures match
+    if match_rule.has_security_exposures is True:
+        exposures = getattr(output.risk_attributes, "security_exposures", []) or []
+        if not exposures:
+            return False
+
     return True
 
 

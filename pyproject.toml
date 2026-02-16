@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "preapply"
-version = "1.0.3"
+version = "1.0.4"
 description = "Deterministic infrastructure risk analysis engine for Terraform plans"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -97,9 +97,3 @@ warn_unused_configs = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = "-v --cov=preapply --cov-report=term-missing --cov-report=html"

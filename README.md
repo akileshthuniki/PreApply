@@ -9,116 +9,97 @@
 
 ---
 
-## ⭐ If PreApply saves you from a bad deployment, consider giving it a star!
-
----
-
 ## The Problem
 
-You've been there.
+You've been there. It's deployment day. You run `terraform plan`. The output is 800 lines long. You scan it. It looks fine. You apply.
 
-It's deployment day. You run `terraform plan`. The output is 800 lines long.
-You scan it. It looks fine. You apply.
+Then your load balancer goes down. Three dependent services follow. Your phone explodes with alerts.
 
-Then your load balancer goes down. Three dependent services follow.
-Your phone explodes with alerts.
-
-**The problem wasn't carelessness. The problem was that infrastructure
-relationships are complex, subtle, and easy to misread under pressure.**
-
-PreApply solves this by analyzing your Terraform plan *before* you apply it —
-giving you a clear, deterministic risk assessment you can trust.
+**PreApply solves this** by analyzing your Terraform plan *before* you apply it — giving you a clear, deterministic risk assessment you can trust.
 
 ---
 
-## What PreApply Does
-
+## What You Get
 ```
 $ preapply analyze plan.json
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  PreApply Risk Analysis
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
++===============================================================+
+| [!] HIGH RISK - SENIOR ENGINEER APPROVAL REQUIRED             |
++===============================================================+
 
-  Risk Level:        HIGH ⚠️
-  Blast Radius:      72/100
-  Affected Resources: 12
-  Affected Components: web-tier, database-tier, auth-service
+Risk Score: 96.34 / 250+ (HIGH tier)
+Required Action: Obtain approval before applying
 
-  Recommendations:
-  → Review shared resource modifications before applying
-  → Database changes will affect 8 downstream services
-  → Consider applying in stages to reduce blast radius
+WHY THIS IS HIGH:
+* Sensitive deletion: aws_db_instance.production
+* Security exposure: ingress open to 0.0.0.0/0 (Port 22)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+RECOMMENDED ACTIONS:
+1. REVIEW DATABASE DELETION - Verify backup before proceeding
+2. ADDRESS SECURITY EXPOSURE - Restrict to known IP ranges
+3. GET APPROVALS - SENIOR_ENGINEER or TECH_LEAD sign-off required
 ```
 
 ---
 
-## Features
+## Key Features
 
-| Feature | Description |
-|---------|-------------|
-| 🔥 **Blast Radius Analysis** | Exactly which resources get affected |
-| 📊 **Risk Scoring** | LOW / MEDIUM / HIGH with 0-100 score |
-| 🔗 **Dependency Mapping** | Upstream/downstream impact visualization |
-| 🎯 **Deterministic Results** | Same input = same output, every time |
-| 🤖 **Local AI Advisor** | Optional plain-language explanations (private, no API calls) |
-| 📝 **Multiple Output Formats** | Human-readable and JSON |
-| 🚀 **CI/CD Ready** | GitHub Actions, GitLab CI, Jenkins |
+- 🔥 **Blast Radius Analysis** — Calculate exactly which resources are affected
+- 📊 **Multi-Dimensional Risk Scoring** — 0-250+ score across data loss, security, infrastructure, and cost
+- ⚡ **Interaction Detection** — Detects when multiple risks combine into catastrophic scenarios
+- 🔐 **Policy Enforcement** — Block hazardous plans in CI/CD (exit codes: 0=pass, 2=block, 3=approval)
+- 🎯 **100% Deterministic** — Same plan = same score, every time
+- 🤖 **Optional Local AI** — Plain-language explanations (runs offline, no data leaves your machine)
 
 ---
 
-## Why Deterministic?
-
+---
+##  Why Deterministic?
 Most infrastructure tools try to use AI for risk detection. We don't.
 
-**AI-based risk detection is unreliable for infrastructure decisions because:**
-- Non-deterministic (same plan can get different scores)
-- Hard to audit or explain to stakeholders
-- Can "hallucinate" risks or miss real ones
-- Requires external API calls (privacy concern)
+AI-based risk detection is unreliable for infrastructure decisions because:
 
-**PreApply's approach:**
-- Core analysis is 100% deterministic
-- AI is optional and advisory only (never changes risk score)
-- Every decision is traceable and explainable
-- Works fully offline
+Non-deterministic (same plan can get different scores)
+Hard to audit or explain to stakeholders
+Can "hallucinate" risks or miss real ones
+Requires external API calls (privacy concern)
+PreApply's approach:
 
+Core analysis is 100% deterministic
+AI is optional and advisory only (never changes risk score)
+Every decision is traceable and explainable
+Works fully offline
 ---
 
 ## Installation
-
 ```bash
 # Basic installation
 pip install preapply
 
-# With optional AI advisor support
+# With optional AI advisor
 pip install 'preapply[ai]'
-```
 
-> AI support requires [Ollama](https://ollama.ai) installed and running locally.
+AI support requires Ollama installed and running locally.
+```
 
 ---
 
 ## Quick Start
-
 ```bash
-# Step 1: Generate Terraform plan
+# Generate plan
 terraform plan -out=tfplan
 terraform show -json tfplan > plan.json
 
-# Step 2: Analyze risk
+# Analyze
 preapply analyze plan.json
 
-# Step 3: Save analysis for detailed review
-preapply analyze plan.json --json --output analysis.json
+# Enforce in CI
+preapply policy check plan.json --policy-file policy.yaml
+```
 
-# Step 4: Get detailed explanation
-preapply explain analysis.json
-
-# Step 5: Ask AI questions (optional)
-preapply ask ai "What is the worst case impact?" analysis.json
+**Try it now (no Terraform required):**
+```bash
+preapply analyze samples/low_risk.json
 ```
 
 ---
@@ -126,119 +107,107 @@ preapply ask ai "What is the worst case impact?" analysis.json
 ## CI/CD Integration
 
 ### GitHub Actions
-
 ```yaml
-name: Terraform Risk Analysis
+- name: Install PreApply
+  run: pip install preapply
 
-on:
-  pull_request:
-    paths:
-      - '**.tf'
+- name: Generate Plan
+  run: |
+    terraform init
+    terraform plan -out=tfplan
+    terraform show -json tfplan > plan.json
 
-jobs:
-  preapply:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-
-      - name: Install PreApply
-        run: pip install preapply
-
-      - name: Generate Plan
-        run: |
-          terraform init
-          terraform plan -out=tfplan
-          terraform show -json tfplan > plan.json
-
-      - name: Analyze Risk
-        run: |
-          preapply analyze plan.json
-          preapply analyze plan.json --json --output analysis.json
-
-      - name: Upload Analysis
-        uses: actions/upload-artifact@v3
-        with:
-          name: risk-analysis
-          path: analysis.json
+- name: Risk Analysis & Policy Check
+  run: |
+    preapply analyze plan.json
+    preapply policy check plan.json --policy-file policy.yaml
 ```
+
+Exit codes: `0` = pass, `2` = blocked, `3` = approval required
+
+---
+
+## Why Deterministic?
+
+**AI-based risk detection is unreliable for infrastructure:**
+- Non-deterministic (same plan = different scores)
+- Hard to audit or explain
+- Can hallucinate risks or miss real ones
+
+**PreApply's approach:**
+- 100% deterministic mathematical model
+- AI is optional and advisory only (never affects risk score)
+- Every decision is traceable and explainable
+- Works fully offline
+
+---
+
+## How It Works
+
+PreApply uses a **multi-dimensional risk model**:
+
+1. **Data Loss** — RDS/S3 deletions, protection removal
+2. **Security** — Public exposures (0.0.0.0/0), sensitive ports (SSH/RDP)
+3. **Infrastructure** — Shared resources, critical infra (VPC, ALB)
+4. **Cost** — High-cost creations, instance scaling
+
+**Interaction Multipliers** detect when risks amplify each other:
+- Database deletion + security exposure = 1.65× multiplier
+- 3+ dimensions elevated = "perfect storm" bonus
+
+**6-Tier Risk Levels:**
+- LOW → AUTO_APPROVE
+- MEDIUM → REQUIRE_PEER_REVIEW
+- HIGH → REQUIRE_APPROVAL (senior engineer)
+- HIGH-SEVERE → REQUIRE_APPROVAL (senior + architect)
+- CRITICAL → SOFT_BLOCK (VP or director)
+- CRITICAL-CATASTROPHIC → HARD_BLOCK (VP + incident review)
 
 ---
 
 ## Command Reference
-
-### `preapply analyze`
-Main analysis command. Analyzes a Terraform plan JSON file.
-
 ```bash
-preapply analyze <plan.json> [OPTIONS]
+# Analyze a plan
+preapply analyze plan.json [--json] [--ascii]
 
-Options:
-  --json          Output structured JSON instead of human-readable
-  --output, -o    Save output to file
-  --quiet         Suppress progress messages
-```
+# Policy check (CI/CD)
+preapply policy check plan.json --policy-file policy.yaml
 
-### `preapply explain`
-Generate deterministic explanations of risk assessment.
+# Get explanations
+preapply explain analysis.json [resource_id]
 
-```bash
-preapply explain <input_file> [resource_id] [OPTIONS]
-
-Options:
-  --json              Output structured JSON
-  --list-resources    List all available resource IDs
-```
-
-### `preapply summary`
-Generate a short paragraph summary of the risk assessment.
-
-```bash
-preapply summary <plan.json> [OPTIONS]
-```
-
-### `preapply ask`
-Ask AI advisor questions (requires `pip install 'preapply[ai]'`).
-
-```bash
-preapply ask ai "<question>" <analysis.json> [OPTIONS]
-
-Options:
-  --model       Ollama model name (default: llama3.2)
-  --max-tokens  Maximum tokens for response
+# Ask AI (optional, requires Ollama)
+preapply ask ai "What's the worst case?" analysis.json
 ```
 
 ---
 
 ## Output Format
 
-PreApply returns a structured `CoreOutput` JSON object:
-
+PreApply outputs structured JSON with:
 ```json
 {
-  "version": "1.0.0",
+  "version": "1.0.4",
   "risk_level": "HIGH",
-  "blast_radius_score": 72,
-  "affected_count": 12,
-  "affected_components": ["web-tier", "database-tier", "auth-service"],
-  "risk_attributes": {
-    "shared_dependencies": [...],
-    "critical_infrastructure": [...],
-    "blast_radius": {
-      "affected_resources": 12,
-      "affected_components": 3,
-      "changed_resources": 5
-    }
+  "risk_level_detailed": "HIGH",
+  "blast_radius_score": 96.34,
+  "risk_action": "REQUIRE_APPROVAL",
+  "approval_required": "SENIOR_ENGINEER or TECH_LEAD",
+  "risk_breakdown": {
+    "primary_dimension": "data",
+    "dimensions": {
+      "data": 75.5,
+      "security": 60.0,
+      "infrastructure": 0.0,
+      "cost": 0.0
+    },
+    "interaction_multiplier": 1.35
   },
-  "recommendations": [
-    "Review shared resource modifications before applying",
-    "Database changes will affect 8 downstream services"
-  ]
+  "sensitive_deletions": [...],
+  "security_exposures": [...],
+  "recommendations": [...]
 }
 ```
-
 ---
 
 ## Architecture
@@ -296,67 +265,61 @@ PreApply's AI never sends data to external APIs.
 Everything stays on your machine.
 
 ---
+---
 
-## Requirements
+## FAQ
 
-- Python 3.8+
-- Terraform (for generating plan JSON files)
-- Ollama (optional, for AI features)
+**Does this replace Terraform's plan review?**  
+No. It augments it by calculating blast radius and risk scores you can't see in raw output.
+
+**Will this slow down CI/CD?**  
+No. Analysis takes <2 seconds for plans with 100+ resources.
+
+**Can I customize the scoring?**  
+Yes. See `src/preapply/config/defaults.yaml` for weights and thresholds.
 
 ---
 
 ## Development
-
 ```bash
-# Clone repository
 git clone https://github.com/akileshthuniki/PreApply.git
 cd PreApply/Core
-
-# Install in development mode
 pip install -e ".[dev]"
 
-# Run tests
-pytest tests/ -v
+# Validate
+preapply analyze samples/low_risk.json
 
-# Code formatting
-black src/ tests/
-
-# Linting
-ruff check src/ tests/
-
-# Type checking
-mypy src/
+# Format & lint
+black src/
+ruff check src/
 ```
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Areas where help is most needed:
+Contributions welcome! Open an issue before submitting large PRs.
 
-- Additional Terraform resource type handlers
-- More CI/CD platform integrations
+**Help wanted:**
+- Additional Terraform resource handlers
+- More CI/CD examples
 - Documentation improvements
-- Test coverage
-
-Please open an issue before submitting a large PR.
 
 ---
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE).
+Apache License 2.0
 
 ---
 
 ## Author
 
-Built by [Akilesh Thuniki](https://github.com/akileshthuniki) —
-DevOps Engineer specializing in infrastructure safety and automation.
+Built by [Akilesh Thuniki](https://github.com/akileshthuniki) — DevOps Engineer specializing in infrastructure safety.
 
-- 🌐 Portfolio: [akileshthuniki-portfolio.netlify.app](https://akileshthuniki-portfolio.netlify.app)
-- 💼 LinkedIn: [linkedin.com/in/akileshthuniki](https://linkedin.com/in/akileshthuniki)
-- 📦 PyPI: [pypi.org/project/preapply](https://pypi.org/project/preapply)
+- 🌐 [Portfolio](https://akileshthuniki-portfolio.netlify.app)
+- 💼 [LinkedIn](https://linkedin.com/in/akileshthuniki)
+- 📦 [PyPI](https://pypi.org/project/preapply)
 
 ---
 

@@ -170,11 +170,14 @@ def handle_empty_plan() -> dict:
     """Handle empty plan (no changes) case."""
     from ...contracts.core_output import CoreOutput, RiskLevel
     from ...contracts.risk_attributes import RiskAttributes, BlastRadiusMetrics
-    
+
     output = CoreOutput(
         version="1.0.0",
         risk_level=RiskLevel.LOW,
-        blast_radius_score=0,
+        risk_level_detailed="LOW",
+        blast_radius_score=0.0,
+        risk_action="AUTO_APPROVE",
+        approval_required="NONE",
         affected_components=[],
         affected_count=0,
         risk_attributes=RiskAttributes(

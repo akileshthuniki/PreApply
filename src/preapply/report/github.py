@@ -48,13 +48,17 @@ def format_github_comment(core_output: CoreOutput) -> str:
     # Deduplicate signals
     key_signals = list(dict.fromkeys(key_signals))
     
-    # Format risk level with emoji
+    # Format risk level with emoji (use risk_level_detailed for display when available)
     risk_emoji = {
         "LOW": "✅",
         "MEDIUM": "⚠️",
-        "HIGH": "❌"
+        "HIGH": "❌",
+        "HIGH-SEVERE": "❌",
+        "CRITICAL": "🛑",
+        "CRITICAL-CATASTROPHIC": "🛑",
     }
-    risk_level_display = f"{risk_emoji.get(str(core_output.risk_level), '')} {core_output.risk_level}"
+    display_level = getattr(core_output, "risk_level_detailed", None) or core_output.risk_level
+    risk_level_display = f"{risk_emoji.get(str(display_level), '')} {display_level}"
     
     # Build comment
     comment_parts = [

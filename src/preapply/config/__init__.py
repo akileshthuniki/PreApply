@@ -39,7 +39,41 @@ def load_scoring_config(config_path: str = None) -> Dict[str, Any]:
         
         if not isinstance(config, dict):
             raise ConfigError("Config file must contain a dictionary")
-        
+
+        # Auto-migrate legacy config: add risk_scoring from blast_radius, shared_resources
+        if "risk_scoring" not in config:
+            blast = config.get("blast_radius", {})
+            shared = config.get("shared_resources", {})
+            config["risk_scoring"] = {
+                "data_loss": {"base_weight": 50, "decay_factor": 0.85, "state_destructive_multiplier": 0.6},
+                "infrastructure": {
+                    "shared_resource_base": blast.get("shared_resource_weight", 30),
+                    "critical_multiplier": blast.get("critical_infrastructure_multiplier", 1.3),
+                    "critical_types": shared.get("critical_types", []),
+                },
+                "security": {"base_weight": 40, "decay_factor": 0.90, "sensitive_port_penalty": 20},
+                "cost": {"creation_weight": 15, "scaling_weight": 10, "decay_factor": 0.90},
+                "interactions": {
+                    "data_security": {"thresholds": [40, 40], "bonus": 0.35},
+                    "infrastructure_security": {"thresholds": [60, 40], "bonus": 0.30},
+                    "data_infrastructure": {"thresholds": [40, 60], "bonus": 0.25},
+                    "cost_infrastructure": {"thresholds": [30, 60], "bonus": 0.20},
+                    "multi_dimension": {"threshold": 35, "three_plus_bonus": 0.40, "two_bonus": 0.15},
+                },
+                "blast_radius": {
+                    "base_multiplier": 10,
+                    "weights": {"infrastructure": 1.0, "security": 0.4, "data": 0.2, "cost": 0.5},
+                },
+                "thresholds": {
+                    "critical_catastrophic": 200,
+                    "critical": 150,
+                    "high_severe": 100,
+                    "high": 70,
+                    "medium": 40,
+                },
+            }
+            logger.info("Auto-migrated legacy config to risk_scoring section")
+
         # Validate required sections
         required_sections = ["blast_radius", "risk_levels", "shared_resources"]
         missing_sections = [s for s in required_sections if s not in config]

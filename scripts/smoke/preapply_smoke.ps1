@@ -10,7 +10,7 @@ Write-Host ""
 # Test 1: Basic analysis
 Write-Host "✓ Test 1: Basic analysis" -ForegroundColor Yellow
 try {
-    preapply analyze tests/fixtures/terraform_plans/low_risk.json 2>&1 | Out-Null
+    preapply analyze samples/low_risk.json 2>&1 | Out-Null
     Write-Host "  PASS: analyze command works" -ForegroundColor Green
 } catch {
     Write-Host "  FAIL: analyze command failed" -ForegroundColor Red
@@ -20,7 +20,7 @@ try {
 # Test 2: Explain (overall)
 Write-Host "✓ Test 2: Explain (overall)" -ForegroundColor Yellow
 try {
-    preapply explain tests/fixtures/terraform_plans/low_risk.json 2>&1 | Out-Null
+    preapply explain samples/low_risk.json 2>&1 | Out-Null
     Write-Host "  PASS: explain command works" -ForegroundColor Green
 } catch {
     Write-Host "  FAIL: explain command failed" -ForegroundColor Red
@@ -30,7 +30,7 @@ try {
 # Test 3: Explain (JSON output)
 Write-Host "✓ Test 3: Explain (JSON output)" -ForegroundColor Yellow
 try {
-    preapply explain tests/fixtures/terraform_plans/low_risk.json --json 2>&1 | Out-Null
+    preapply explain samples/low_risk.json --json 2>&1 | Out-Null
     Write-Host "  PASS: explain --json works" -ForegroundColor Green
 } catch {
     Write-Host "  FAIL: explain --json failed" -ForegroundColor Red
@@ -40,7 +40,7 @@ try {
 # Test 3b: JSON contract sanity check
 Write-Host "✓ Test 3b: JSON contract sanity" -ForegroundColor Yellow
 try {
-    $jsonOutput = preapply explain tests/fixtures/terraform_plans/low_risk.json --json 2>&1 | ConvertFrom-Json
+    $jsonOutput = preapply explain samples/low_risk.json --json 2>&1 | ConvertFrom-Json
     if ($jsonOutput.explanation_id -and $jsonOutput.risk_level) {
         Write-Host "  PASS: JSON contains core contract fields" -ForegroundColor Green
     } else {
@@ -54,7 +54,7 @@ try {
 # Test 4: List resources
 Write-Host "✓ Test 4: List resources" -ForegroundColor Yellow
 try {
-    preapply explain tests/fixtures/terraform_plans/low_risk.json --list-resources 2>&1 | Out-Null
+    preapply explain samples/low_risk.json --list-resources 2>&1 | Out-Null
     Write-Host "  PASS: explain --list-resources works" -ForegroundColor Green
 } catch {
     Write-Host "  FAIL: explain --list-resources failed" -ForegroundColor Red
@@ -64,7 +64,7 @@ try {
 # Test 5: Summary
 Write-Host "✓ Test 5: Summary" -ForegroundColor Yellow
 try {
-    preapply summary tests/fixtures/terraform_plans/low_risk.json 2>&1 | Out-Null
+    preapply summary samples/low_risk.json 2>&1 | Out-Null
     Write-Host "  PASS: summary command works" -ForegroundColor Green
 } catch {
     Write-Host "  FAIL: summary command failed" -ForegroundColor Red
@@ -75,7 +75,7 @@ try {
 if (Test-Path "policy.example.yaml") {
     Write-Host "✓ Test 6: Policy check (auto mode)" -ForegroundColor Yellow
     try {
-        $null = preapply policy check tests/fixtures/terraform_plans/low_risk.json `
+        $null = preapply policy check samples/low_risk.json `
             --policy-file policy.example.yaml `
             --enforcement-mode auto 2>&1
         Write-Host "  PASS: policy check command works (auto mode)" -ForegroundColor Green
@@ -98,7 +98,7 @@ if (Test-Path "policy.example.yaml") {
     # Test 6b: Policy check with manual mode
     Write-Host "✓ Test 6b: Policy check (manual mode)" -ForegroundColor Yellow
     try {
-        $null = preapply policy check tests/fixtures/terraform_plans/low_risk.json `
+        $null = preapply policy check samples/low_risk.json `
             --policy-file policy.example.yaml `
             --enforcement-mode manual 2>&1
         Write-Host "  PASS: policy check command works (manual mode)" -ForegroundColor Green

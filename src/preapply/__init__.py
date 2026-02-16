@@ -7,6 +7,9 @@ from .ingest.plan_normalizer import normalize_plan
 from .graph.dependency_graph import DependencyGraph
 from .analysis.risk_scoring import calculate_risk_score
 from .analysis.recommendations import generate_recommendations
+from .analysis.security_exposure import detect_security_exposures
+from .analysis.cost_analysis import detect_cost_alerts
+from .analysis.state_destructive import detect_state_destructive_updates
 from .contracts.core_output import CoreOutput, RiskLevel
 from .config import load_scoring_config
 from .utils.logging import setup_logging, get_logger
@@ -35,16 +38,28 @@ def analyze(plan_json_path: str, config_path: str = None, format_human: bool = F
         
         graph = DependencyGraph()
         graph.build_from_resources(normalized_plan.resources)
-        risk_score = calculate_risk_score(graph, config)
+        security_exposures = detect_security_exposures(plan_data)
+        cost_alerts = detect_cost_alerts(plan_data, config)
+        state_destructive_updates = detect_state_destructive_updates(plan_data)
+        risk_score = calculate_risk_score(
+            graph, config,
+            security_exposures=security_exposures,
+            cost_alerts=cost_alerts,
+            state_destructive_updates=state_destructive_updates,
+        )
         recommendations = generate_recommendations(graph, risk_score, config)
         
         try:
             output = CoreOutput(
                 version="1.0.0",
                 risk_level=RiskLevel(risk_score["risk_level"]),
+                risk_level_detailed=risk_score.get("risk_level_detailed"),
                 blast_radius_score=risk_score["blast_radius_score"],
+                risk_action=risk_score.get("risk_action"),
+                approval_required=risk_score.get("approval_required"),
                 affected_components=risk_score.get("affected_components", []),
                 affected_count=risk_score.get("affected_count", 0),
+                deletion_count=risk_score.get("deletion_count", 0),
                 risk_attributes=risk_score.get("risk_attributes"),
                 risk_factors=risk_score.get("contributing_factors", []),
                 recommendations=recommendations
@@ -73,9 +88,13 @@ def _create_empty_output() -> Dict[str, Any]:
     output = CoreOutput(
         version="1.0.0",
         risk_level=RiskLevel.LOW,
-        blast_radius_score=0,
+        risk_level_detailed="LOW",
+        blast_radius_score=0.0,
+        risk_action="AUTO_APPROVE",
+        approval_required="NONE",
         affected_components=[],
         affected_count=0,
+        deletion_count=0,
         risk_attributes=RiskAttributes(
             blast_radius=BlastRadiusMetrics(
                 affected_resources=0,
